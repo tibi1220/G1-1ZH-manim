@@ -1,0 +1,5 @@
+.DS_Store
+.manim-slides.json
+media
+slides
+__pycache__
