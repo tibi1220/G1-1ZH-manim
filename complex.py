@@ -258,8 +258,8 @@ class Interactive(Slide):
         plane = NumberPlane()
         circle = Circle(radius=3)
         dot = Dot(color=YELLOW)
-        # horizontal = Line(LEFT, RIGHT)
-        # vertical = Line(ORIGIN, UP)
+        horizontal = Line(LEFT, RIGHT)
+        vertical = Line(ORIGIN, UP)
         # tracker = ComplexValueTracker()
         # tracker.add_updater(
         #     lambda x: x.animate.set_value(dot.get_x() + dot.get_y() * 1j)
@@ -267,7 +267,7 @@ class Interactive(Slide):
 
         # Helper functions
         def get_line():
-            return Line(ORIGIN, dot.get_center(), color=RED)
+            return Arrow(ORIGIN, dot.get_center(), color=RED, buff=0)
 
         def get_real_line():
             return Line(ORIGIN, np.array([dot.get_x(), 0.0, 0.0]), color=GREEN)
@@ -296,13 +296,42 @@ class Interactive(Slide):
             lambda: im_brace.get_tex(f"b = {np.round(dot.get_y(),2)}")
         )
 
+        def get_angle(r):
+            v1 = line.get_unit_vector()
+            v2 = horizontal.get_unit_vector()
+
+            if np.abs(v1[0] == v2[0]):
+                return False
+
+            return Angle(horizontal, line, radius=r, color=YELLOW)
+
+        def angle_updater(x):
+            angle = get_angle(1)
+
+            if angle == False:
+                return
+
+            return x.become(angle)
+
+        def phi_updater(x):
+            angle = get_angle(1.5)
+
+            if angle == False:
+                return
+
+            return x.move_to(angle.point_from_proportion(0.5))
+
         # Angle -- TODO: add angle
-        # angle = Angle(horizontal, vertical)
-        # angle.add_updater(lambda x: x.become(Angle(horizontal, line)))
+        angle = Angle(horizontal, vertical)
+        angle.add_updater(angle_updater)
+        phi = MathTex(r"\varphi")
+        phi.add_updater(phi_updater)
 
         # Animation starts here
         self.play(Create(plane))
-        self.add(line, re_line, im_line, re_brace, im_brace, re_text, im_text)
+        self.add(
+            line, re_line, im_line, re_brace, im_brace, re_text, im_text, angle, phi
+        )
         self.pause()
 
         self.start_loop()
@@ -314,7 +343,16 @@ class Interactive(Slide):
         self.play(
             FadeOut(
                 VGroup().add(
-                    line, re_line, im_line, re_brace, im_brace, re_text, im_text, dot
+                    line,
+                    re_line,
+                    im_line,
+                    re_brace,
+                    im_brace,
+                    re_text,
+                    im_text,
+                    dot,
+                    angle,
+                    phi,
                 )
             )
         )
@@ -492,14 +530,21 @@ class Operations(Slide):
                     color=BLUE,
                     stroke_width=8,
                 )
-                t = MathTex(r"e^{", np.round(2 * v * PI / (k + 1), 2), r"i}")
+                t = MathTex(
+                    # r"e^{\frac{",
+                    # 2 * v,
+                    # r" \pi }{ ",
+                    # k + 1,
+                    # r"}i}",
+                    f"e^{{\\frac{{{2 * v} \\pi}}{{{k + 1}}}i}}"
+                )
                 t.move_to(ax.coords_to_point(roots[v][0], roots[v][1]))
                 t.shift(
                     (
                         UP * np.cos(v * 2 * np.pi / (k + 1))
                         - RIGHT * np.sin(v * 2 * np.pi / (k + 1))
                     )
-                    * 0.75
+                    * 0.6
                 )
 
                 # t = MathTex(
